@@ -26,16 +26,17 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore GlobaHr-SendEmail-API.sln
 
-      # 5. Build with MSBuild (creates WebDeploy package)
-      - name: Build with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.sln
-            /p:Configuration=Release `
-            /p:DeployOnBuild=true `
-            /p:WebPublishMethod=Package `
-            /p:PackageAsSingleFile=true `
-            /p:SkipInvalidConfigurations=true `
-            /p:PackageLocation="${{ github.workspace }}\\output"
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
 
+      - name: Publish
+        run: dotnet publish -c Release -o ./publish
+
+      - name: Upload artifact for deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-app
+          path: ./publish
 
       # 7. Deploy package to Azure WebApp
       - name: Deploy to Azure WebApp
