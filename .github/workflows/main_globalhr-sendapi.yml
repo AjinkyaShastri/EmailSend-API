@@ -27,8 +27,8 @@ jobs:
         run: nuget restore GlobaHr-SendEmail-API.sln
 
       # 5. Build using MSBuild (not dotnet build!)
-      - name: Build with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU"
+      - name: Build with MSBuild (detailed logs)
+  	run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU" /verbosity:detailed
 
       # 6. Publish to a folder
       - name: Publish with MSBuild
