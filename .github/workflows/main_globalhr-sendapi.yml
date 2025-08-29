@@ -1,53 +1,50 @@
-name: Build and Deploy .NET Framework 4.6 App to Azure WebApp
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
-on:
-  push:
-    branches:
-      - main   # change if using a different branch
+trigger:
+- main
 
-jobs:
-  build-and-deploy:
-    runs-on: windows-latest
+pool: mycomputeragent
 
-    steps:
-      # 1. Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v4
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  projectPath: 'GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj'
+  azureSubscription: 'My Subscription'
+  appName: 'GlobalHr-SendAPI'
 
-      # 2. Setup MSBuild
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+steps:
+- task: NuGetToolInstaller@1
 
-      # 3. Setup NuGet
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v2
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
 
-      # 4. Restore NuGet packages
-      - name: Restore NuGet packages
-        run: nuget restore GlobaHr-SendEmail-API.sln
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArgs: >
+      /p:DeployOnBuild=true 
+      /p:WebPublishMethod=FileSystem 
+      /p:PackageAsSingleFile=false 
+      /p:OutDir=$(Build.ArtifactStagingDirectory)\publish\
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
 
-      # 5. Build using MSBuild (not dotnet build!)
-      - name: Build with MSBuild (detailed logs)
-  	run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU" /verbosity:detailed
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)\publish\_PublishedWebsites\GlobaHr-SendEmail-API'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/webapp.zip'
+    replaceExistingArchive: true
 
-      # 6. Publish to a folder
-      - name: Publish with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.sln /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:PublishUrl="${{ github.workspace }}\\publish" /p:Configuration=Release
-
-      # 7. Create deployment ZIP
-      - name: Create deployment package
-        run: powershell Compress-Archive -Path "${{ github.workspace }}\\publish\\*" -DestinationPath "${{ github.workspace }}\\publish.zip" -Force
-
-      # 8. Upload artifact (optional)
-      - name: Upload artifact for deployment
-        uses: actions/upload-artifact@v4
-        with:
-          name: dotnet-framework-app
-          path: ./publish.zip
-
-      # 9. Deploy package to Azure WebApp
-      - name: Deploy to Azure WebApp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'GlobalHr-SendAPI'   # 👈 your App Service name
-          package: ${{ github.workspace }}\\publish.zip
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: '$(azureSubscription)'
+    appType: 'webApp'
+    appName: '$(appName)'
+    package: '$(Build.ArtifactStagingDirectory)/webapp.zip'
