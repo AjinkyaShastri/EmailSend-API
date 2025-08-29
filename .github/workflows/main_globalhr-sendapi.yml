@@ -1,61 +1,40 @@
-name: Build and Deploy .NET Framework 4.6 App to Azure WebApp
+name: Build and Deploy .NET Framework Web API to Azure
 
 on:
   push:
     branches:
-      - main   # change if using a different branch
+      - main   # Change to your default branch if needed
 
 jobs:
   build-and-deploy:
-    runs-on: windows-latest
+    runs-on: windows-latest   # 👈 Required for .NET Framework builds
 
     steps:
-      # 1. Checkout code
+      # Checkout source code
       - name: Checkout code
-        uses: actions/checkout@v4
-    
-      - name: Setup MSBuild
-	uses: microsoft/setup-msbuild@v2
+        uses: actions/checkout@v3
 
-      - name: Build with MSBuild
-  	run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU"
- 
-     # 2. Setup MSBuild
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
-      # 3. Setup NuGet
+      # Setup NuGet
       - name: Setup NuGet
-        uses: NuGet/setup-nuget@v2
+        uses: NuGet/setup-nuget@v1
 
-      # 4. Restore NuGet packages
+      # Restore NuGet packages
       - name: Restore NuGet packages
-        run: nuget restore GlobaHr-SendEmail-API.sln
+        run: nuget restore GlobaHr-SendEmail-API.sln   # 👈 replace with your solution file
 
+      # Setup MSBuild
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.3.1
 
-
-      # 5. Build using MSBuild (not dotnet build!)
+      # Build with MSBuild
       - name: Build with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild GlobaHr-SendEmail-API.csproj /p:Configuration=Release
 
-      # 6. Publish to a folder
-      - name: Publish with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.sln /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:PublishUrl="${{ github.workspace }}\\publish" /p:Configuration=Release
-
-      # 7. Create deployment ZIP
-      - name: Create deployment package
-        run: powershell Compress-Archive -Path "${{ github.workspace }}\\publish\\*" -DestinationPath "${{ github.workspace }}\\publish.zip" -Force
-
-      # 8. Upload artifact (optional)
-      - name: Upload artifact for deployment
-        uses: actions/upload-artifact@v4
+      # Deploy to Azure Web App using Publish Profile
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
         with:
-          name: dotnet-framework-app
-          path: ./publish.zip
-
-      # 9. Deploy package to Azure WebApp
-      - name: Deploy to Azure WebApp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'GlobalHr-SendAPI'   # 👈 your App Service name
-          package: ${{ github.workspace }}\\publish.zip
+          app-name: "GlobalHr-SendAPI"   # 👈 replace with your Azure App Service name
+          slot-name: "production"
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ github.workspace }}\bin\Release
