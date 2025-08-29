@@ -1,43 +1,45 @@
-name: Build and Deploy .NET Framework App to Azure WebApp
+name: Build and Deploy .NET Framework 4.6 App to Azure WebApp
 
 on:
   push:
     branches:
-      - main   # or your deployment branch
+      - main   # change if using a different branch
 
 jobs:
   build-and-deploy:
     runs-on: windows-latest
 
     steps:
+      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Add MSBuild to PATH
+      # 2. Setup MSBuild
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      # Add NuGet
+      # 3. Setup NuGet
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v2
 
-      # Restore NuGet packages
+      # 4. Restore NuGet packages
       - name: Restore NuGet packages
-        run: nuget restore GlobaHr-SendEmail-API.sln
+        run: nuget restore YourSolution.sln
 
-      # Build with MSBuild
+      # 5. Build with MSBuild (creates WebDeploy package)
       - name: Build with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="${{ github.workspace }}\\output"
+        run: msbuild YourSolution.sln `
+            /p:Configuration=Release `
+            /p:DeployOnBuild=true `
+            /p:WebPublishMethod=Package `
+            /p:PackageAsSingleFile=true `
+            /p:SkipInvalidConfigurations=true `
+            /p:PackageLocation="${{ github.workspace }}\\output"
 
-      # Login to Azure using Service Principal
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Deploy package to Azure WebApp
+      # 7. Deploy package to Azure WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'GlobalHr-SendAPI'   # Replace with your App Service name
+          app-name: 'GlobalHr-SendAPI'   # 👈 replace with your App Service name
           package: ${{ github.workspace }}\\output\\*.zip
