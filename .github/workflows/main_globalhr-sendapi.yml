@@ -27,8 +27,16 @@ jobs:
         uses: microsoft/setup-msbuild@v1.3.1
 
       # Build and publish using MSBuild with publish profile
-      - name: Build with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.csproj /p:Configuration=Release
+     # Build and publish using MSBuild (creates a WebDeploy zip package)
+     - name: Build with MSBuild
+       run: msbuild GlobaHr-SendEmail-API.csproj ^
+        	/p:Configuration=Release ^
+        	/p:DeployOnBuild=true ^
+        	/p:WebPublishMethod=Package ^
+        	/p:PackageAsSingleFile=true ^
+        	/p:SkipInvalidConfigurations=true ^
+        	/p:PackageLocation="${{ github.workspace }}\WebApp.zip"
+
 
 
       # Deploy to Azure Web App using Publish Profile
