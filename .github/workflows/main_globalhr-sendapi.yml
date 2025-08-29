@@ -24,11 +24,11 @@ jobs:
 
       # 4. Restore NuGet packages
       - name: Restore NuGet packages
-        run: nuget restore YourSolution.sln
+        run: nuget restore GlobaHr-SendEmail-API.sln
 
       # 5. Build with MSBuild (creates WebDeploy package)
       - name: Build with MSBuild
-        run: msbuild YourSolution.sln `
+        run: msbuild GlobaHr-SendEmail-API.sln
             /p:Configuration=Release `
             /p:DeployOnBuild=true `
             /p:WebPublishMethod=Package `
