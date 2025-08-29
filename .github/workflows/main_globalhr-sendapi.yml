@@ -1,4 +1,4 @@
-name: Build and Deploy .NET App to Azure WebApp
+name: Build and Deploy .NET Framework App to Azure WebApp
 
 on:
   push:
@@ -13,30 +13,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'  # change if using 6.0 / 7.0 / framework
+      # Add MSBuild to PATH
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
-      - name: Restore dependencies
-        run: dotnet restore
+      # Add NuGet
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
 
-      - name: Build project
-        run: dotnet build --configuration Release --no-restore
+      # Restore NuGet packages
+      - name: Restore NuGet packages
+        run: nuget restore GlobaHr-SendEmail-API.sln
 
-      - name: Publish project
-        run: dotnet publish --configuration Release --output ./publish
+      # Build with MSBuild
+      - name: Build with MSBuild
+        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="${{ github.workspace }}\\output"
 
-      # 🔐 Login with SPN (no Basic Auth needed)
+      # Login to Azure using Service Principal
       - name: Azure Login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 🚀 Deploy to Azure WebApp
+      # Deploy package to Azure WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'GlobalHr-SendAPI'   # replace with your App Service name
-          slot-name: 'production'
-          package: ./publish
+          app-name: 'GlobalHr-SendAPI'   # Replace with your App Service name
+          package: ${{ github.workspace }}\\output\\*.zip
