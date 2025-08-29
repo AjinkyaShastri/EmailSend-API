@@ -26,18 +26,17 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.3.1
 
-      # Build and publish using MSBuild with publish profile
-     # Build and publish using MSBuild (creates a WebDeploy zip package)
-     - name: Build with MSBuild
-       run: msbuild GlobaHr-SendEmail-API.csproj ^
-        	/p:Configuration=Release ^
-        	/p:DeployOnBuild=true ^
-        	/p:WebPublishMethod=Package ^
-        	/p:PackageAsSingleFile=true ^
-        	/p:SkipInvalidConfigurations=true ^
-        	/p:PackageLocation="${{ github.workspace }}\WebApp.zip"
-
-
+      # Build and publish using MSBuild (creates a WebDeploy zip package)
+      - name: Build with MSBuild
+        run: |
+          msbuild GlobaHr-SendEmail-API.csproj `
+            /p:Configuration=Release `
+            /p:DeployOnBuild=true `
+            /p:WebPublishMethod=Package `
+            /p:PackageAsSingleFile=true `
+            /p:SkipInvalidConfigurations=true `
+            /p:PackageLocation="${{ github.workspace }}\WebApp.zip"
+        shell: pwsh
 
       # Deploy to Azure Web App using Publish Profile
       - name: Deploy to Azure Web App
@@ -46,4 +45,4 @@ jobs:
           app-name: "GlobalHr-SendAPI"   # 👈 replace with your Azure App Service name
           slot-name: "production"
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ${{ github.workspace }}\bin\Release
+          package: ${{ github.workspace }}\WebApp.zip
