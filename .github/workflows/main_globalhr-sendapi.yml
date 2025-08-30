@@ -3,43 +3,45 @@ name: Build and Deploy .NET Framework Web API to Azure
 on:
   push:
     branches:
-      - main   # change if using a different branch
+      - main   # Change if your default branch is different
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: windows-latest
 
     steps:
-      # 1. Checkout repo
-      - name: Checkout code
-        uses: actions/checkout@v3
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       # 2. Setup MSBuild
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      # 3. Install .NET Framework 4.6.1 Developer Pack
-      - name: Install .NET Framework 4.6.1 Developer Pack
-        run: choco install netfx-4.6.1-devpack -y
+      # 3. Setup NuGet
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
 
       # 4. Restore NuGet packages
       - name: Restore NuGet packages
-        run: nuget restore GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj -SolutionDirectory .
+        run: nuget restore GlobaHr-SendEmail-API.sln
 
-# 7. Publish project
-- name: Publish project
-  run: |
-    msbuild GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:Platform="Any CPU" /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=True /p:publishUrl="${{ github.workspace }}/publish"
+      # 5. Build with MSBuild
+      - name: Build with MSBuild
+        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU"
 
-# 8. Zip published output
-- name: Zip publish folder
-  run: |
-    cd ${{ github.workspace }}/publish
-    powershell Compress-Archive * ../WebApp.zip
+      # 6. Publish output to a folder
+      - name: Publish project
+        run: msbuild GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=True /p:publishUrl="${{ github.workspace }}\published"
 
-# 9. Deploy to Azure WebApp
-- name: Deploy to Azure WebApp
-  uses: azure/webapps-deploy@v3
-  with:
-    app-name: GlobalHr-SendAPI
-    package: ${{ github.workspace }}/WebApp.zip
+      # 7. Zip published output
+      - name: Create deployment package
+        run: Compress-Archive -Path "${{ github.workspace }}\published\*" -DestinationPath "${{ github.workspace }}\WebApp.zip" -Force
+
+      # 8. Deploy to Azure WebApp
+      - name: Deploy to Azure WebApp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: GlobalHr-SendAPI   # 👈 Replace with your App Service name
+          slot-name: production
+          package: ${{ github.workspace }}\WebApp.zip
