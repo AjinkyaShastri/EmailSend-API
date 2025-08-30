@@ -25,7 +25,7 @@ jobs:
 
       # 4. Restore NuGet packages (solution-wide)
       - name: Restore NuGet packages
-	run: nuget restore GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj -SolutionDirectory .
+	run: nuget restore GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj -SolutionDirectory
 
 
       # 5. Build with MSBuild
