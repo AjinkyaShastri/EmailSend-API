@@ -45,4 +45,4 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: GlobalHr-SendAPI
-          package: ${{ github.workspace }}\WebApp.zip
+          package: ${{ github.workspace }}/WebApp.zip
