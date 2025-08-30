@@ -26,23 +26,20 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj -SolutionDirectory .
 
-      # 5. Build and package into WebApp.zip
-      - name: Build and Package
-        run: msbuild GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="${{ github.workspace }}\WebApp.zip"
+# 7. Publish project
+- name: Publish project
+  run: |
+    msbuild GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:Platform="Any CPU" /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=True /p:publishUrl="${{ github.workspace }}/publish"
 
-      # 6. Verify WebApp.zip exists
-      - name: Verify package
-        run: dir "${{ github.workspace }}\WebApp.zip"
+# 8. Zip published output
+- name: Zip publish folder
+  run: |
+    cd ${{ github.workspace }}/publish
+    powershell Compress-Archive * ../WebApp.zip
 
-      # 7. Azure Login
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      # 8. Deploy to Azure WebApp
-      - name: Deploy to Azure WebApp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: GlobalHr-SendAPI
-          package: ${{ github.workspace }}\WebApp.zip
+# 9. Deploy to Azure WebApp
+- name: Deploy to Azure WebApp
+  uses: azure/webapps-deploy@v3
+  with:
+    app-name: GlobalHr-SendAPI
+    package: ${{ github.workspace }}/WebApp.zip
