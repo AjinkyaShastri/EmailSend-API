@@ -23,7 +23,7 @@ jobs:
         run: |
           choco install netfx-4.6.1-devpack -y
 
-      # 4. Restore NuGet packages (using csproj since sln is missing)
+      # 4. Restore NuGet packages
       - name: Restore NuGet packages
         run: nuget restore GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj -SolutionDirectory .
 
@@ -37,9 +37,18 @@ jobs:
             /p:SkipInvalidConfigurations=true `
             /p:PackageLocation="WebApp.zip"
 
-      # 6. Upload build artifact (optional but useful)
+      # 6. Upload build artifact (optional)
       - name: Upload WebApp artifact
         uses: actions/upload-artifact@v4
         with:
           name: WebApp
           path: WebApp.zip
+
+      # 7. Deploy to Azure WebApp
+      - name: Deploy to Azure WebApp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: YOUR_AZURE_WEBAPP_NAME   # 👈 change this
+          slot-name: production              # optional (default is production)
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: WebApp.zip
