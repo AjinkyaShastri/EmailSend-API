@@ -37,7 +37,7 @@ jobs:
             /p:PackageLocation="WebApp.zip"
 
      - name: Publish project
-       run: msbuild EmailSend-API/EmailSend-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="${{ github.workspace }}\WebApp.zip"
+       run: msbuild GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="${{ github.workspace }}\WebApp.zip"
 
 
       # 7. Verify WebApp.zip exists
