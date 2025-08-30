@@ -20,14 +20,13 @@ jobs:
 
       # 3. Install .NET Framework 4.6.1 Developer Pack (needed for GitHub runners)
       - name: Install .NET Framework 4.6.1 Developer Pack
-        run: |
-          choco install netfx-4.6.1-devpack -y
+        run: choco install netfx-4.6.1-devpack -y
 
       # 4. Restore NuGet packages (using csproj since sln is missing)
       - name: Restore NuGet packages
         run: nuget restore GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj -SolutionDirectory .
 
-      # 5. Build with MSBuild
+      # 5. Build with MSBuild (this generates WebApp.zip already)
       - name: Build with MSBuild
         run: msbuild GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj `
             /p:Configuration=Release `
@@ -37,19 +36,15 @@ jobs:
             /p:SkipInvalidConfigurations=true `
             /p:PackageLocation="WebApp.zip"
 
-      - name: Archive files
-    	run: Compress-Archive -Path "GlobaHr-SendEmail-API.WebAPI\bin\Release\*" -DestinationPath WebApp.zip
-
-
-      # 🔹 Login to Azure
+      # 6. Login to Azure
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 🔹 Deploy to WebApp
+      # 7. Deploy to WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "YOUR_AZURE_WEBAPP_NAME"
+          app-name: "GlobalHr-SendAPI"
           package: WebApp.zip
