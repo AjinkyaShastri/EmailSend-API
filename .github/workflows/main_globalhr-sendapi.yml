@@ -1,54 +1,39 @@
-name: Build and Deploy .NET Framework Web API to Azure
+name: Build and Deploy .NET Framework App to Azure WebApp
 
 on:
   push:
     branches:
-      - main   # change if using a different branch
+      - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: windows-latest
 
     steps:
-      # 1. Checkout repo
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      # 2. Setup MSBuild
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
 
-      # 3. Install .NET Framework 4.6.1 Developer Pack (needed for GitHub runners)
-      - name: Install .NET Framework 4.6.1 Developer Pack
-        run: |
-          choco install netfx-4.6.1-devpack -y
+      - name: Restore NuGet Packages
+        run: nuget restore EmailSend-API.sln
 
-      # 4. Restore NuGet packages
-      - name: Restore NuGet packages
-        run: nuget restore GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj -SolutionDirectory .
-
-      # 5. Build with MSBuild
       - name: Build with MSBuild
-        run: msbuild GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj `
-            /p:Configuration=Release `
-            /p:DeployOnBuild=true `
-            /p:WebPublishMethod=Package `
-            /p:PackageAsSingleFile=true `
-            /p:SkipInvalidConfigurations=true `
-            /p:PackageLocation="WebApp.zip"
+        run: msbuild EmailSend-API.sln /p:Configuration=Release
 
-      # 6. Upload build artifact (optional)
-      - name: Upload WebApp artifact
-        uses: actions/upload-artifact@v4
+      - name: Archive files
+        run: Compress-Archive -Path GlobaHr-SendEmail-API\bin\Release\* -DestinationPath WebApp.zip
+
+      # 🔹 Login to Azure
+      - name: Azure Login
+        uses: azure/login@v1
         with:
-          name: WebApp
-          path: WebApp.zip
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 7. Deploy to Azure WebApp
+      # 🔹 Deploy to WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: YOUR_AZURE_WEBAPP_NAME   # 👈 change this
-          slot-name: production              # optional (default is production)
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          app-name: "YOUR_AZURE_WEBAPP_NAME"
           package: WebApp.zip
