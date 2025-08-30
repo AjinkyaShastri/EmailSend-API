@@ -23,10 +23,9 @@ jobs:
         run: |
           choco install netfx-4.6.1-devpack -y
 
-      # 4. Restore NuGet packages (solution-wide)
+      # 4. Restore NuGet packages (using csproj since sln is missing)
       - name: Restore NuGet packages
-	run: nuget restore GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj -SolutionDirectory
-
+        run: nuget restore GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj -SolutionDirectory .
 
       # 5. Build with MSBuild
       - name: Build with MSBuild
