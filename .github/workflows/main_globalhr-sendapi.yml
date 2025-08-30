@@ -42,16 +42,16 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     # 2. Zip publish output into WebApp.zip
-- name: Zip published files
-  run: |
-    mkdir publish
-    msbuild GlobalHr-SendEmail-API.sln /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=true /p:publishUrl=publish
-    cd publish
-    powershell Compress-Archive -Path * -DestinationPath ../WebApp.zip -Force
+    - name: Zip published files
+      run: |
+    	mkdir publish
+	msbuild GlobalHr-SendEmail-API.sln /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=true /p:publishUrl=publish
+    	cd publish
+    	powershell Compress-Archive -Path * -DestinationPath ../WebApp.zip -Force
 
-# 3. Deploy to Azure WebApp
-- name: Deploy to Azure WebApp
-  uses: azure/webapps-deploy@v3
-  with:
-    app-name: GlobalHr-SendAPI
-    package: ${{ github.workspace }}/WebApp.zip
+    # 3. Deploy to Azure WebApp
+    - name: Deploy to Azure WebApp
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: GlobalHr-SendAPI
+        package: ${{ github.workspace }}/WebApp.zip
