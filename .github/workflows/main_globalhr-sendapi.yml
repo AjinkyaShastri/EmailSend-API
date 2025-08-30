@@ -37,9 +37,18 @@ jobs:
             /p:SkipInvalidConfigurations=true `
             /p:PackageLocation="WebApp.zip"
 
-      # 6. Upload build artifact (optional but useful)
-      - name: Upload WebApp artifact
-        uses: actions/upload-artifact@v4
+      - name: Archive files
+        run: Compress-Archive -Path GlobaHr-SendEmail-API\bin\Release\* -DestinationPath WebApp.zip
+
+      # 🔹 Login to Azure
+      - name: Azure Login
+        uses: azure/login@v1
         with:
-          name: WebApp
-          path: WebApp.zip
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # 🔹 Deploy to WebApp
+      - name: Deploy to Azure WebApp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "YOUR_AZURE_WEBAPP_NAME"
+          package: WebApp.zip
