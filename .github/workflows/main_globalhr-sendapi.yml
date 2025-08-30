@@ -18,31 +18,21 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      # 3. Install .NET Framework 4.6.1 Developer Pack (needed for GitHub runners)
+      # 3. Install .NET Framework 4.6.1 Developer Pack
       - name: Install .NET Framework 4.6.1 Developer Pack
         run: choco install netfx-4.6.1-devpack -y
 
-      # 4. Restore NuGet packages (using csproj since sln is missing)
+      # 4. Restore NuGet packages
       - name: Restore NuGet packages
-        run: nuget restore GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj -SolutionDirectory .
+        run: nuget restore GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj -SolutionDirectory .
 
-      # 5. Build with MSBuild (creates WebApp.zip in workspace root)
-      - name: Build with MSBuild
-        run: msbuild GlobaHr-SendEmail-API/GlobaHr-SendEmail-API.csproj `
-            /p:Configuration=Release `
-            /p:DeployOnBuild=true `
-            /p:WebPublishMethod=Package `
-            /p:PackageAsSingleFile=true `
-            /p:SkipInvalidConfigurations=true `
-            /p:PackageLocation="WebApp.zip"
+      # 5. Build and package into WebApp.zip
+      - name: Build and Package
+        run: msbuild GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="${{ github.workspace }}\WebApp.zip"
 
-    - name: Publish project
-      run: msbuild GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="${{ github.workspace }}\WebApp.zip"
-
-
-      # 7. Verify WebApp.zip exists
+      # 6. Verify WebApp.zip exists
       - name: Verify package
-        run: dir ${{ github.workspace }}\WebApp.zip
+        run: dir "${{ github.workspace }}\WebApp.zip"
 
       # 7. Azure Login
       - name: Azure Login
@@ -55,4 +45,4 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: GlobalHr-SendAPI
-          package: ${{ github.workspace }}/WebApp.zip
+          package: ${{ github.workspace }}\WebApp.zip
