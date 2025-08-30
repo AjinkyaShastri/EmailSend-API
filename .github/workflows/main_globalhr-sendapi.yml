@@ -35,21 +35,11 @@ jobs:
             /p:WebPublishMethod=Package `
             /p:PackageAsSingleFile=true `
             /p:SkipInvalidConfigurations=true `
-            /p:PackageLocation="${{ github.workspace }}\WebApp.zip" `
-            /fl /flp:logfile=msbuild.log;verbosity=diagnostic
+            /p:PackageLocation="${{ github.workspace }}\WebApp.zip"
         shell: pwsh
-
-      # Upload MSBuild log if build fails
-      - name: Upload MSBuild Log
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: msbuild-log
-          path: msbuild.log
 
       # Deploy to Azure Web App using Publish Profile
       - name: Deploy to Azure Web App
-        if: success()   # only deploy if build succeeds
         uses: azure/webapps-deploy@v2
         with:
           app-name: "GlobalHr-SendAPI"   # 👈 replace with your Azure App Service name
