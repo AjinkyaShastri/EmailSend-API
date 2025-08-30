@@ -36,9 +36,9 @@ jobs:
             /p:SkipInvalidConfigurations=true `
             /p:PackageLocation="WebApp.zip"
 
-      # 6. Verify WebApp.zip exists
+      # 7. Verify WebApp.zip exists
       - name: Verify package
-        run: dir WebApp.zip
+        run: dir ${{ github.workspace }}\WebApp.zip
 
       # 7. Azure Login
       - name: Azure Login
