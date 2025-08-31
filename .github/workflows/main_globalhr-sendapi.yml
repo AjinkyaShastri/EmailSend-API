@@ -40,9 +40,15 @@ jobs:
         run: Compress-Archive -Path publish\* -DestinationPath WebApp.zip
         shell: pwsh
 
+      # 7. Azure Login
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       # 8. Deploy to Azure WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: GlobalHr-SendAPI   # your App Service name
-          package: WebApp.zip
+          app-name: GlobalHr-SendAPI
+          package: ${{ github.workspace }}\WebApp.zip
