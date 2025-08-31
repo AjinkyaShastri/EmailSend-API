@@ -30,18 +30,26 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore GlobaHr-SendEmail-API.sln
 
-      # 6. Build solution with MSBuild
+      # 6. Build with MSBuild
       - name: Build with MSBuild
         run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU"
 
-      # 7. Create publish folder
-      - name: Create publish folder
-        run: New-Item -ItemType Directory -Force -Path publish
+      # 7. Prepare publish folder
+      - name: Prepare publish folder
+        run: |
+          if (Test-Path publish) { Remove-Item publish -Recurse -Force }
+          New-Item -ItemType Directory -Path publish
         shell: pwsh
 
       # 8. Copy build output
       - name: Copy build output
-        run: xcopy /Y /E "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release\*" publish\
+        run: |
+          $buildOutput = "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release"
+          if (Test-Path $buildOutput) {
+            xcopy /Y /E "$buildOutput\*" publish\
+          } else {
+            Write-Error "Build output not found at $buildOutput"
+          }
         shell: pwsh
 
       # 9. Archive files
