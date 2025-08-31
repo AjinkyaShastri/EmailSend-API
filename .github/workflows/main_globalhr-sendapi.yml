@@ -18,41 +18,40 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
-     # 3. Install .NET Framework 4.6.1 Developer Pack
+      # 3. Install .NET Framework 4.6.1 Developer Pack
       - name: Install .NET Framework 4.6.1 Developer Pack
         run: choco install netfx-4.6.1-devpack -y
 
-      # 3. Setup NuGet
+      # 4. Setup NuGet
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
 
-      # 4. Restore NuGet packages
+      # 5. Restore NuGet packages
       - name: Restore NuGet packages
         run: nuget restore GlobaHr-SendEmail-API.sln
 
-      # 5. Build solution with MSBuild
+      # 6. Build solution with MSBuild
       - name: Build with MSBuild
         run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU"
 
-      # 6. Create publish folder
+      # 7. Create publish folder
       - name: Create publish folder
         run: New-Item -ItemType Directory -Force -Path publish
-  	shell: pwsh
+        shell: pwsh
 
-      # 7. Publish artifacts
+      # 8. Copy build output
       - name: Copy build output
-        run: |
-          mkdir publish
-          xcopy /Y /E "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release\*" publish\
+        run: xcopy /Y /E "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release\*" publish\
+        shell: pwsh
 
+      # 9. Archive files
       - name: Archive files
-        run: |
-          Compress-Archive -Path publish\* -DestinationPath WebApp.zip
+        run: Compress-Archive -Path publish\* -DestinationPath WebApp.zip
+        shell: pwsh
 
-      # 8. Deploy to Azure WebApp
+      # 10. Deploy to Azure WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
           app-name: GlobalHr-SendAPI   # your App Service name
           package: WebApp.zip
-
