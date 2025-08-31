@@ -18,6 +18,10 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
+     # 3. Install .NET Framework 4.6.1 Developer Pack
+      - name: Install .NET Framework 4.6.1 Developer Pack
+        run: choco install netfx-4.6.1-devpack -y
+
       # 3. Setup NuGet
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
