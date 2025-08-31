@@ -38,14 +38,20 @@ jobs:
       - name: Create publish folder
         run: mkdir publish
 
-      # 7. Copy build output (adjust net48 if your project targets net472, net461, etc.)
+      # 7. Publish artifacts
       - name: Copy build output
-        run: xcopy /Y /E "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release\net48\*" publish\
+        run: |
+          mkdir publish
+          xcopy /Y /E "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release\*" publish\
+
+      - name: Archive files
+        run: |
+          Compress-Archive -Path publish\* -DestinationPath WebApp.zip
 
       # 8. Deploy to Azure WebApp
       - name: Deploy to Azure WebApp
-        uses: azure/webapps-deploy@v2
+        uses: azure/webapps-deploy@v3
         with:
-          app-name: "YOUR_AZURE_WEBAPP_NAME"
-          package: publish
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          app-name: GlobalHr-SendAPI   # your App Service name
+          package: WebApp.zip
+
