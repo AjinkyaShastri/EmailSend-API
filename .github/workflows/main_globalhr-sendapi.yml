@@ -30,6 +30,13 @@ jobs:
       - name: Build and Package
         run: msbuild GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="${{ github.workspace }}\WebApp.zip"
 
+      # 6. Create WebApp.zip from publish output
+      - name: Create deployment package
+        run: |
+          mkdir publish
+          xcopy /Y /E "$(Build.SourcesDirectory)\GlobaHr-SendEmail-API\bin\Release\Publish" publish\
+          powershell Compress-Archive -Path publish\* -DestinationPath WebApp.zip
+
       # 6. Verify WebApp.zip exists
       - name: Verify package
         run: dir "${{ github.workspace }}\WebApp.zip"
