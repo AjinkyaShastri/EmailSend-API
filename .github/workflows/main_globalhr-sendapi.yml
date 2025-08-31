@@ -37,7 +37,7 @@ jobs:
 
       # 7. Archive files
       - name: Archive files
-        run: Compress-Archive -Path publish\* -DestinationPath WebApp.zip
+        run: Compress-Archive -Path publish\GlobaHr-SendEmail-API\* -DestinationPath WebApp.zip
         shell: pwsh
 
       # 7. Azure Login
