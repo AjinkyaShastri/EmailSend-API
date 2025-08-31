@@ -45,7 +45,7 @@ jobs:
       # 8. Copy build output (adjust folder based on actual target framework)
       - name: Copy build output
         run: |
-          $buildOutput = "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release\net461"
+          $buildOutput = "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release"
           if (Test-Path $buildOutput) {
             xcopy /Y /E "$buildOutput\*" publish\
           } else {
