@@ -3,55 +3,45 @@ name: Build and Deploy .NET Framework Web API to Azure
 on:
   push:
     branches:
-      - main   # change if using a different branch
+      - main   # Change if needed
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: windows-latest
 
     steps:
-      # 1. Checkout repo
-      - name: Checkout code
-        uses: actions/checkout@v4
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       # 2. Setup MSBuild
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v1
 
       # 3. Setup NuGet
       - name: Setup NuGet
-        uses: NuGet/setup-nuget@v2
+        uses: NuGet/setup-nuget@v1
 
-      # 4. Install .NET Framework 4.6.1 Developer Pack
-      - name: Install .NET Framework 4.6.1 Dev Pack
-        run: choco install netfx-4.6.1-devpack -y
-
-      # 5. Restore NuGet packages
+      # 4. Restore NuGet packages
       - name: Restore NuGet packages
         run: nuget restore GlobaHr-SendEmail-API.sln
 
-      # 6. Build with MSBuild
+      # 5. Build solution with MSBuild
       - name: Build with MSBuild
         run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU"
 
-      # 7. Copy build output
+      # 6. Create publish folder
+      - name: Create publish folder
+        run: mkdir publish
+
+      # 7. Copy build output (adjust net48 if your project targets net472, net461, etc.)
       - name: Copy build output
-        run: |
-          mkdir publish
-          xcopy /Y /E "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release\*" publish\
+        run: xcopy /Y /E "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release\net48\*" publish\
 
-      # 8. Create deployment package
-      - name: Create ZIP package
-        run: Compress-Archive -Path publish\* -DestinationPath WebApp.zip -Force
-
-      # 9. Verify WebApp.zip exists
-      - name: Verify package
-        run: dir WebApp.zip
-
-      # 10. Deploy to Azure WebApp
+      # 8. Deploy to Azure WebApp
       - name: Deploy to Azure WebApp
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v2
         with:
-          app-name: GlobalHr-SendAPI   # Replace with your Web App name
-          package: WebApp.zip
+          app-name: "YOUR_AZURE_WEBAPP_NAME"
+          package: publish
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
