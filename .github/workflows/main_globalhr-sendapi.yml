@@ -38,7 +38,7 @@ jobs:
       - name: Copy build output
         run: |
           mkdir publish
-          xcopy /Y /E "${{ github.workspace }}\GlobaHr-SendEmail-API\bin\Release\*" publish\
+          xcopy /Y /E "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release\*" publish\
 
       # 8. Create deployment package
       - name: Create ZIP package
