@@ -22,29 +22,33 @@ jobs:
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v2
 
-      # 4. Restore NuGet packages
+      # 4. Install .NET Framework 4.6.1 Developer Pack
+      - name: Install .NET Framework 4.6.1 Dev Pack
+        run: choco install netfx-4.6.1-devpack -y
+
+      # 5. Restore NuGet packages
       - name: Restore NuGet packages
         run: nuget restore GlobaHr-SendEmail-API.sln
 
-      # 5. Build with MSBuild
+      # 6. Build with MSBuild
       - name: Build with MSBuild
         run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU"
 
-      # 6. Create publish folder and copy output
+      # 7. Copy build output
       - name: Copy build output
         run: |
           mkdir publish
-          xcopy /Y /E "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release\*" publish\
+          xcopy /Y /E "${{ github.workspace }}\GlobaHr-SendEmail-API\bin\Release\*" publish\
 
-      # 7. Create WebApp.zip
+      # 8. Create deployment package
       - name: Create ZIP package
         run: Compress-Archive -Path publish\* -DestinationPath WebApp.zip -Force
 
-      # 8. Verify WebApp.zip exists
+      # 9. Verify WebApp.zip exists
       - name: Verify package
         run: dir WebApp.zip
 
-      # 9. Deploy to Azure WebApp
+      # 10. Deploy to Azure WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
