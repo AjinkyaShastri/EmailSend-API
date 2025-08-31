@@ -35,20 +35,38 @@ jobs:
         run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU" /p:OutDir="$(Get-Location)\publish\\"
         shell: pwsh
 
-      # 7. Archive files
-      - name: Archive files
-        run: Compress-Archive -Path GlobaHr-SendEmail-API\bin\Release\* -DestinationPath WebApp.zip
+      # 7. Create publish folder
+      - name: Prepare publish folder
+        run: |
+          if (Test-Path publish) { Remove-Item publish -Recurse -Force }
+          New-Item -ItemType Directory -Path publish
         shell: pwsh
 
-      # 7. Azure Login
+      # 8. Copy build output (adjust folder based on actual target framework)
+      - name: Copy build output
+        run: |
+          $buildOutput = "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release\net461"
+          if (Test-Path $buildOutput) {
+            xcopy /Y /E "$buildOutput\*" publish\
+          } else {
+            Write-Error "Build output not found at $buildOutput"
+          }
+        shell: pwsh
+
+      # 9. Archive files into WebApp.zip
+      - name: Archive files
+        run: Compress-Archive -Path publish\* -DestinationPath WebApp.zip
+        shell: pwsh
+
+      # 10. Azure login
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 8. Deploy to Azure WebApp
+      # 11. Deploy to Azure Web App
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: GlobalHr-SendAPI
-          package: ${{ github.workspace }}\WebApp.zip
+          app-name: GlobalHr-SendAPI  # your App Service name
+          package: WebApp.zip
