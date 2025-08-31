@@ -30,34 +30,17 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore GlobaHr-SendEmail-API.sln
 
-      # 6. Build with MSBuild
+      # 6. Build with MSBuild (force output to publish folder)
       - name: Build with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU"
-
-      # 7. Prepare publish folder
-      - name: Prepare publish folder
-        run: |
-          if (Test-Path publish) { Remove-Item publish -Recurse -Force }
-          New-Item -ItemType Directory -Path publish
+        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU" /p:OutDir="$(Get-Location)\publish\\"
         shell: pwsh
 
-      # 8. Copy build output
-      - name: Copy build output
-        run: |
-          $buildOutput = "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release"
-          if (Test-Path $buildOutput) {
-            xcopy /Y /E "$buildOutput\*" publish\
-          } else {
-            Write-Error "Build output not found at $buildOutput"
-          }
-        shell: pwsh
-
-      # 9. Archive files
+      # 7. Archive files
       - name: Archive files
         run: Compress-Archive -Path publish\* -DestinationPath WebApp.zip
         shell: pwsh
 
-      # 10. Deploy to Azure WebApp
+      # 8. Deploy to Azure WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
