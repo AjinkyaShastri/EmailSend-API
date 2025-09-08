@@ -1,4 +1,4 @@
-name: Build and Deploy .NET Framework Web API to Azure
+name: Build and Deploy .NET Framework Web API to Azure (Direct CLI Deploy)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-deploy:
+  build-and-deploy:
     runs-on: windows-latest
 
     steps:
@@ -18,8 +18,8 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
-      # 3. Install .NET Framework 4.6.1 Developer Pack
-      - name: Install .NET Framework 4.6.1 Developer Pack
+      # 3. Install .NET Framework Developer Pack (if needed)
+      - name: Install .NET 4.6.1 Developer Pack
         run: choco install netfx-4.6.1-devpack -y
 
       # 4. Setup NuGet
@@ -30,13 +30,15 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore ".\GlobaHr-SendEmail-API.sln"
 
-      # 6. Build and publish Web API to 'publish' folder
+      # 6. Build and publish Web API to local folder
       - name: Build and Publish Web API
         run: |
-          msbuild ".\GlobaHr-SendEmail-API.sln" `
+          msbuild ".\GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj" `
             /p:Configuration=Release `
-            /p:Platform="Any CPU" `
-            /p:OutDir="${{ github.workspace }}\publish\" `
+            /p:DeployOnBuild=true `
+            /p:WebPublishMethod=FileSystem `
+            /p:DeleteExistingFiles=true `
+            /p:publishUrl="${{ github.workspace }}\publish" `
             /verbosity:detailed
         shell: pwsh
 
@@ -45,20 +47,22 @@ jobs:
         run: dir "${{ github.workspace }}\publish"
         shell: pwsh
 
-      # 8. Archive published output
-      - name: Archive published output
-        run: Compress-Archive -Path "${{ github.workspace }}\publish\*" -DestinationPath "${{ github.workspace }}\WebApp.zip"
-        shell: pwsh
+      # 8. Install Azure CLI
+      - name: Setup Azure CLI
+        uses: azure/setup-azure@v3
 
-      # 7. Azure Login
+      # 9. Login to Azure using Service Principal
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 8. Deploy to Azure WebApp
-      - name: Deploy to Azure WebApp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: GlobalHr-SendAPI
-          package: ${{ github.workspace }}\WebApp.zip
+      # 10. Deploy publish folder using Azure CLI
+      - name: Deploy to Azure Web App via Azure CLI
+        run: |
+          az webapp deploy `
+            --resource-group Global-Hr-API `
+            --name GlobalHr-SendAPI `
+            --src-path "${{ github.workspace }}\publish" `
+            --type zip
+        shell: pwsh
