@@ -1,46 +1,29 @@
-name: Build and Deploy .NET Framework Web API to Azure
-
-on:
-  push:
-    branches:
-      - main   # Change if needed
-
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      # 1. Checkout code
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      # 2. Setup MSBuild
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
-      # 3. Install .NET Framework 4.6.1 Developer Pack
-      - name: Install .NET Framework 4.6.1 Developer Pack
-        run: choco install netfx-4.6.1-devpack -y
-
-      # 4. Setup NuGet
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
 
-      # 5. Restore NuGet packages
       - name: Restore NuGet packages
-        run: nuget restore GlobaHr-SendEmail-API.sln
+        run: nuget restore .\GlobaHr-SendEmail-API.sln
 
-      # 6. Build and create WebDeploy package
-      - name: Build and Publish with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=true /p:publishUrl="$(Get-Location)\publish"
+      - name: Build and Publish Web API
+        run: msbuild .\GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=true /p:publishUrl="$(Get-Location)\publish"
         shell: pwsh
 
-      - name: Archive files
-        run: Compress-Archive -Path .\publish\* -DestinationPath WebApp.zip
+      - name: Archive published output
+        run: Compress-Archive -Path "$(Get-Location)\publish\*" -DestinationPath "$(Get-Location)\WebApp.zip"
         shell: pwsh
 
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
-            app-name: GlobalHr-SendAPI
-            package: ${{ github.workspace }}\WebApp.zip
+          app-name: GlobalHr-SendAPI
+          package: WebApp.zip
