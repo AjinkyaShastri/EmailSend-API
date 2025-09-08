@@ -1,10 +1,11 @@
 name: Build and Deploy .NET Framework Web API to Azure
 
-# Trigger workflow on push to main branch
+# Trigger workflow on push to main or master branch
 on:
   push:
     branches:
       - main
+      - master
 
 jobs:
   build-deploy:
@@ -19,15 +20,19 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
-      # 3. Setup NuGet
+      # 3. Install .NET Framework 4.6.1 Developer Pack (required for MSBuild)
+      - name: Install .NET 4.6.1 Developer Pack
+        run: choco install netfx-4.6.1-devpack -y
+
+      # 4. Setup NuGet
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
 
-      # 4. Restore NuGet packages
+      # 5. Restore NuGet packages
       - name: Restore NuGet packages
         run: nuget restore ".\GlobaHr-SendEmail-API.sln"
 
-      # 5. Build and publish Web API to 'publish' folder
+      # 6. Build and publish Web API to 'publish' folder
       - name: Build and Publish Web API
         run: |
           msbuild ".\GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj" `
@@ -39,17 +44,17 @@ jobs:
             /verbosity:detailed
         shell: pwsh
 
-      # 6. Debug: list published files
+      # 7. List published files (debug)
       - name: List published files
         run: dir "${{ github.workspace }}\publish"
         shell: pwsh
 
-      # 7. Archive published output
+      # 8. Archive published output
       - name: Archive published output
         run: Compress-Archive -Path "${{ github.workspace }}\publish\*" -DestinationPath "${{ github.workspace }}\WebApp.zip"
         shell: pwsh
 
-      # 8. Deploy to Azure WebApp
+      # 9. Deploy to Azure WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
