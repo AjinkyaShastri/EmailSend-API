@@ -1,19 +1,32 @@
+name: Build and Deploy .NET Framework Web API to Azure
+
+on:
+  push:
+    branches:
+      - main   # Change to "master" if your repo branch is master
+  workflow_dispatch:   # Allows manual run from Actions tab
+
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
+      # 1. Checkout code
       - uses: actions/checkout@v3
 
+      # 2. Setup MSBuild
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
+      # 3. Setup NuGet
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
 
+      # 4. Restore NuGet packages
       - name: Restore NuGet packages
         run: nuget restore .\GlobaHr-SendEmail-API.sln
 
+      # 5. Build and publish to "publish" folder
       - name: Build and Publish Web API
         run: msbuild .\GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj `
             /p:Configuration=Release `
@@ -23,16 +36,18 @@ jobs:
             /p:publishUrl="${{ github.workspace }}\publish"
         shell: pwsh
 
+      # 6. Zip published output
       - name: Archive published output
         run: Compress-Archive -Path "${{ github.workspace }}\publish\*" -DestinationPath "${{ github.workspace }}\WebApp.zip"
         shell: pwsh
 
-      # Azure login using Service Principal
+      # 7. Login to Azure (Service Principal JSON in AZURE_CREDENTIALS secret)
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # 8. Deploy to Azure WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
