@@ -33,31 +33,34 @@ jobs:
       # 6. Build and publish Web API
       - name: Build and Publish Web API
         run: |
-          $publishFolder = "${{ github.workspace }}/publish"
-          if (!(Test-Path $publishFolder)) { New-Item -ItemType Directory -Path $publishFolder }
-
           msbuild ".\GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj" `
             /p:Configuration=Release `
             /p:DeployOnBuild=true `
             /p:WebPublishMethod=FileSystem `
             /p:DeleteExistingFiles=true `
-            /p:publishUrl=$publishFolder `
+            /p:publishUrl="${{ github.workspace }}/publish" `
             /verbosity:detailed
         shell: pwsh
 
-      # 7. Debug: list published files
-      - name: List published files
-        run: dir "${{ github.workspace }}/publish"
+      # 7. Debug: check if publish folder exists
+      - name: Debug publish folder
+        run: |
+          if (Test-Path "${{ github.workspace }}/publish") {
+            Write-Host "✅ Publish folder created."
+            dir "${{ github.workspace }}/publish"
+          } else {
+            Write-Error "❌ Publish folder NOT created by MSBuild."
+          }
         shell: pwsh
 
       # 8. Archive published output
       - name: Archive published output
         run: |
-          Compress-Archive -Path "${{ github.workspace }}/publish/*" -DestinationPath "${{ github.workspace }}/WebApp.zip" -Force
-          if (Test-Path "${{ github.workspace }}/WebApp.zip") {
+          if (Test-Path "${{ github.workspace }}/publish") {
+            Compress-Archive -Path "${{ github.workspace }}/publish/*" -DestinationPath "${{ github.workspace }}/WebApp.zip" -Force
             Write-Host "✅ WebApp.zip created successfully."
           } else {
-            Write-Error "❌ WebApp.zip was NOT created."
+            Write-Error "❌ Publish folder missing, skipping zip."
           }
         shell: pwsh
 
