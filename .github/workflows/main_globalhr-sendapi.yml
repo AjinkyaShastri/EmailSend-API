@@ -14,20 +14,24 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore .\GlobaHr-SendEmail-API.sln
 
-      - name: Install .NET Framework 4.6.1 Developer Pack
-        run: choco install netfx-4.6.1-devpack -y
-
       - name: Build and Publish Web API
-        run: msbuild .\GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=true /p:publishUrl="${{ github.workspace }}\publish"
-        shell: pwsh
-
-      - name: Check publish folder
-        run: dir "${{ github.workspace }}\publish"
+        run: msbuild .\GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj `
+            /p:Configuration=Release `
+            /p:DeployOnBuild=true `
+            /p:WebPublishMethod=FileSystem `
+            /p:DeleteExistingFiles=true `
+            /p:publishUrl="${{ github.workspace }}\publish"
         shell: pwsh
 
       - name: Archive published output
         run: Compress-Archive -Path "${{ github.workspace }}\publish\*" -DestinationPath "${{ github.workspace }}\WebApp.zip"
         shell: pwsh
+
+      # Azure login using Service Principal
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
