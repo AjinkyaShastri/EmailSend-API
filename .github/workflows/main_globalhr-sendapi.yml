@@ -36,7 +36,7 @@ jobs:
         shell: pwsh
 
       - name: Archive files
-        run: Compress-Archive -Path publish\* -DestinationPath WebApp.zip
+        run: Compress-Archive -Path .\publish\* -DestinationPath WebApp.zip
         shell: pwsh
 
       - name: Deploy to Azure WebApp
