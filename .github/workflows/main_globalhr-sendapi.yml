@@ -15,15 +15,15 @@ jobs:
         run: nuget restore .\GlobaHr-SendEmail-API.sln
 
       - name: Build and Publish Web API
-        run: msbuild .\GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=true /p:publishUrl="$(Get-Location)\publish"
+        run: msbuild .\GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=true /p:publishUrl="${{ github.workspace }}\publish"
         shell: pwsh
 
       - name: Archive published output
-        run: Compress-Archive -Path "$(Get-Location)\publish\*" -DestinationPath "$(Get-Location)\WebApp.zip"
+        run: Compress-Archive -Path "${{ github.workspace }}\publish\*" -DestinationPath "${{ github.workspace }}\WebApp.zip"
         shell: pwsh
 
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
           app-name: GlobalHr-SendAPI
-          package: WebApp.zip
+          package: ${{ github.workspace }}\WebApp.zip
