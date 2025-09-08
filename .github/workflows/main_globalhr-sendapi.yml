@@ -1,4 +1,4 @@
-name: Build and Deploy .NET Framework Web API to Azure
+name: Build and Deploy .NET Framework WebAPI
 
 on:
   push:
@@ -10,67 +10,45 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1. Checkout repo
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
 
-      # 2. Setup MSBuild
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1
+      - name: 🔧 Setup NuGet
+        uses: NuGet/setup-nuget@v2
+        with:
+          nuget-version: latest
 
-      # 3. Install .NET Framework Developer Pack
-      - name: Install .NET 4.6.1 Developer Pack
-        run: choco install netfx-4.6.1-devpack -y
+      - name: 🔧 Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
-      # 4. Setup NuGet
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v1
+      - name: 📦 Restore NuGet packages
+        run: nuget restore EmailSend-API.sln
 
-      # 5. Restore NuGet packages
-      - name: Restore NuGet packages
-        run: nuget restore ".\GlobaHr-SendEmail-API.sln"
+      - name: 🏗️ Build solution
+        run: msbuild EmailSend-API.sln /p:Configuration=Release
 
-      # 6. Build Web API (output to publish folder)
-      - name: Build Web API
+      - name: 📤 Publish WebApp
+        run: msbuild EmailSend-API/EmailSend-API.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:publishUrl="$(Build.SourcesDirectory)\publish"
+
+      - name: 🗂️ Verify publish folder
         run: |
-          msbuild ".\GlobaHr-SendEmail-API.sln" `
-            /p:Configuration=Release `
-            /p:Platform="Any CPU" `
-            /p:OutDir="${{ github.workspace }}/publish/" `
-            /verbosity:detailed
-        shell: pwsh
-
-      # 7. Debug: list publish folder
-      - name: Debug publish folder
-        run: |
-          if (Test-Path "${{ github.workspace }}/publish") {
+          if (Test-Path "${{ github.workspace }}\publish") {
             Write-Host "✅ Publish folder created."
-            dir "${{ github.workspace }}/publish"
+            Get-ChildItem "${{ github.workspace }}\publish"
           } else {
             Write-Error "❌ Publish folder NOT created by MSBuild."
           }
         shell: pwsh
 
-      # 8. Archive published output
-      - name: Archive published output
-        run: |
-          Compress-Archive -Path "${{ github.workspace }}/publish/*" -DestinationPath "${{ github.workspace }}/WebApp.zip" -Force
-          if (Test-Path "${{ github.workspace }}/WebApp.zip") {
-            Write-Host "✅ WebApp.zip created successfully."
-          } else {
-            Write-Error "❌ WebApp.zip was NOT created."
-          }
+      - name: 📦 Zip published files
+        run: Compress-Archive -Path "${{ github.workspace }}\publish\*" -DestinationPath "${{ github.workspace }}\WebApp.zip" -Force
         shell: pwsh
 
-      # 9. Azure Login
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}   # JSON service principal secret
-
-      # 10. Deploy to Azure Web App
-      - name: Deploy to Azure WebApp
+      - name: 🚀 Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
           app-name: GlobalHr-SendAPI
-          package: ${{ github.workspace }}/WebApp.zip
+          package: "${{ github.workspace }}\WebApp.zip"
+          slot-name: production
+        env:
+          AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
