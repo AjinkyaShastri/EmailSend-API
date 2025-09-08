@@ -32,18 +32,15 @@ jobs:
 
       # 6. Build and create WebDeploy package
       - name: Build and Publish with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(Get-Location)\WebApp.zip"
+        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=true /p:publishUrl="$(Get-Location)\publish"
         shell: pwsh
 
-      # 7. Azure Login
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Archive files
+        run: Compress-Archive -Path publish\* -DestinationPath WebApp.zip
+        shell: pwsh
 
-      # 8. Deploy to Azure WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: GlobalHr-SendAPI
-          package: ${{ github.workspace }}\WebApp.zip
+            app-name: GlobalHr-SendAPI
+            package: ${{ github.workspace }}\WebApp.zip
