@@ -3,25 +3,30 @@ name: Build and Deploy .NET Framework Web API to Azure
 on:
   push:
     branches:
-      - main
+      - main  # Change if your branch is different
 
 jobs:
   build-deploy:
     runs-on: windows-2022
 
     steps:
+      # 1. Checkout the repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2. Setup MSBuild
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
+      # 3. Setup NuGet
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
 
+      # 4. Restore NuGet packages
       - name: Restore NuGet packages
         run: nuget restore .\GlobaHr-SendEmail-API.sln
 
+      # 5. Build and publish Web API to local 'publish' folder
       - name: Build and Publish Web API
         run: |
           msbuild .\GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj `
@@ -29,21 +34,27 @@ jobs:
             /p:DeployOnBuild=true `
             /p:WebPublishMethod=FileSystem `
             /p:DeleteExistingFiles=true `
-            /p:publishUrl="${{ github.workspace }}\publish" `
-            /verbosity:detailed
+            /p:publishUrl=publish `
+            /verbosity:minimal
         shell: pwsh
 
+      # 6. List published files (debug)
       - name: List published files
-        run: dir "${{ github.workspace }}\publish"
+        run: dir publish
         shell: pwsh
 
+      # 7. Archive published output
       - name: Archive published output
-        run: Compress-Archive -Path "${{ github.workspace }}\publish\*" -DestinationPath "${{ github.workspace }}\WebApp.zip"
+        run: Compress-Archive -Path "publish\*" -DestinationPath "WebApp.zip"
         shell: pwsh
 
+      # 8. Azure login using service principal
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # 9. Deploy to Azure WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: GlobalHr-SendAPI
-          publish-profile: ${{ secrets.AZURE_CREDENTIALS }}
-          package: "${{ github.workspace }}\WebApp.zip"
