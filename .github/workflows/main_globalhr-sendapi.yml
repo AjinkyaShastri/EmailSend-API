@@ -1,15 +1,13 @@
 name: Build and Deploy .NET Framework Web API to Azure
 
-# Trigger workflow on push to main or master branch
 on:
   push:
     branches:
       - main
-      - master
 
 jobs:
   build-deploy:
-    runs-on: windows-2022
+    runs-on: windows-latest
 
     steps:
       # 1. Checkout repo
@@ -20,8 +18,8 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
-      # 3. Install .NET Framework 4.6.1 Developer Pack (required for MSBuild)
-      - name: Install .NET 4.6.1 Developer Pack
+      # 3. Install .NET Framework 4.6.1 Developer Pack
+      - name: Install .NET Framework 4.6.1 Developer Pack
         run: choco install netfx-4.6.1-devpack -y
 
       # 4. Setup NuGet
@@ -54,7 +52,7 @@ jobs:
         run: Compress-Archive -Path "${{ github.workspace }}\publish\*" -DestinationPath "${{ github.workspace }}\WebApp.zip"
         shell: pwsh
 
-      # 9. Deploy to Azure WebApp
+      # 9. Deploy to Azure WebApp using publish profile
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
