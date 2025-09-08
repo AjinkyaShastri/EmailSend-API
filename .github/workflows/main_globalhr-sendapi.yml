@@ -30,8 +30,8 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore GlobaHr-SendEmail-API.sln
 
-      # 6. Build with MSBuild (force output to publish folder)
-      - name: Build with MSBuild
+      # 6. Build and create WebDeploy package
+      - name: Build and Publish with MSBuild
         run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(Get-Location)\WebApp.zip"
         shell: pwsh
 
