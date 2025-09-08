@@ -33,7 +33,7 @@ jobs:
       # 6. Build and publish Web API to 'publish' folder
       - name: Build and Publish Web API
         run: |
-           msbuild ".\GlobaHr-SendEmail-API\GlobaHr-SendEmail-API.csproj" `
+           msbuild ".\GlobaHr-SendEmail-API.sln" `
             /p:Configuration=Release `
             /p:Platform="Any CPU" `
             /p:OutDir="${{ github.workspace }}\publish\" `
