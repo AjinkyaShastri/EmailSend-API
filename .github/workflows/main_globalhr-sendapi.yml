@@ -32,7 +32,7 @@ jobs:
 
       # 6. Build with MSBuild (force output to publish folder)
       - name: Build with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU" /p:OutDir="$(Get-Location)\publish\\"
+        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(Get-Location)\WebApp.zip"
         shell: pwsh
 
       # 7. Archive files
