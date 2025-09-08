@@ -3,7 +3,7 @@ name: Build and Deploy .NET Framework Web API to Azure
 on:
   push:
     branches:
-      - main  # change if needed
+      - main   # Change if needed
 
 jobs:
   build:
@@ -30,48 +30,25 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore GlobaHr-SendEmail-API.sln
 
-      # 6. Build solution with MSBuild
+      # 6. Build with MSBuild (force output to publish folder)
       - name: Build with MSBuild
-        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU"
-
-      # 7. List bin folder to confirm build
-      - name: List build output
-        run: dir GlobaHr-SendEmail-API\bin\Release
+        run: msbuild GlobaHr-SendEmail-API.sln /p:Configuration=Release /p:Platform="Any CPU" /p:OutDir="$(Get-Location)\publish\\"
         shell: pwsh
 
-      # 8. Prepare publish folder
-      - name: Prepare publish folder
-        run: |
-          if (Test-Path publish) { Remove-Item publish -Recurse -Force }
-          New-Item -ItemType Directory -Path publish
-        shell: pwsh
-
-      # 9. Copy DLLs and other required files
-      - name: Copy build output
-        run: |
-          $buildOutput = "$(Get-Location)\GlobaHr-SendEmail-API\bin\Release"
-          if (Test-Path $buildOutput) {
-            Write-Host "Build output found at $buildOutput"
-            xcopy /Y /E "$buildOutput\*" publish\
-          } else {
-            Write-Error "Build output not found at $buildOutput"
-          }
-        shell: pwsh
-
-      # 10. Archive files into WebApp.zip
+      # 7. Archive files
       - name: Archive files
         run: Compress-Archive -Path publish\* -DestinationPath WebApp.zip
         shell: pwsh
 
-      # 11. Azure Login
+      # 7. Azure Login
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 12. Deploy to Azure WebApp
+      # 8. Deploy to Azure WebApp
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: GlobalHr-SendAPI   # your App Service name
-          package: WebApp.zip
+          app-name: GlobalHr-SendAPI
+          package: ${{ github.workspace }}\WebApp.zip
