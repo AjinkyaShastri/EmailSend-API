@@ -47,17 +47,13 @@ jobs:
         run: dir "${{ github.workspace }}\publish"
         shell: pwsh
 
-      # 8. Install Azure CLI
-      - name: Setup Azure CLI
-        uses: azure/setup-azure@v3
-
-      # 9. Login to Azure using Service Principal
+      # 8. Login to Azure using Service Principal
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 10. Deploy publish folder using Azure CLI
+      # 9. Deploy publish folder using Azure CLI
       - name: Deploy to Azure Web App via Azure CLI
         run: |
           az webapp deploy `
