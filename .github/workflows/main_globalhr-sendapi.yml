@@ -1,6 +1,5 @@
 name: Build and Deploy .NET Framework Web API to Azure
 
-# Trigger on push to main branch
 on:
   push:
     branches:
@@ -11,7 +10,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1. Checkout repository
+      # 1. Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -19,8 +18,8 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
 
-      # 3. Install .NET Framework 4.6.1 Developer Pack
-      - name: Install .NET Framework 4.6.1 Developer Pack
+      # 3. Install .NET Framework Developer Pack
+      - name: Install .NET 4.6.1 Developer Pack
         run: choco install netfx-4.6.1-devpack -y
 
       # 4. Setup NuGet
@@ -31,7 +30,7 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore ".\GlobaHr-SendEmail-API.sln"
 
-      # 6. Build and publish Web API to 'publish' folder
+      # 6. Build and publish Web API
       - name: Build and Publish Web API
         run: |
           $publishFolder = "${{ github.workspace }}\publish"
@@ -46,7 +45,7 @@ jobs:
             /verbosity:detailed
         shell: pwsh
 
-      # 7. List published files (debug)
+      # 7. Debug: list published files
       - name: List published files
         run: dir "${{ github.workspace }}\publish"
         shell: pwsh
@@ -56,10 +55,15 @@ jobs:
         run: Compress-Archive -Path "${{ github.workspace }}\publish\*" -DestinationPath "${{ github.workspace }}\WebApp.zip"
         shell: pwsh
 
-      # 9. Deploy to Azure Web App using publish profile
+      # 9. Azure Login using JSON Service Principal
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # 10. Deploy to Azure Web App
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: GlobalHr-SendAPI                   # Your Azure Web App name
-          publish-profile: ${{ secrets.AZURE_CREDENTIALS }}  # Publish profile secret (XML)
+          app-name: GlobalHr-SendAPI
           package: "${{ github.workspace }}\WebApp.zip"
